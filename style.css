@@ -101,6 +101,10 @@ body {
   justify-content: space-between;
 }
 
+.task-list.hidden{
+  display: none;
+}
+
 .task-item {
   display: flex;
   justify-content: space-between;
@@ -252,6 +256,8 @@ body {
 .todo-footer.hidden {
   display: none;
 }
+
+
 
 .footer-btn {
   display: flex;

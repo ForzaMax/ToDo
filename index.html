@@ -12,16 +12,20 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
-    <script src="script.js" defer></script>
+
+    <!-- <script src="./js/script.js" defer></script> -->
+
+    <script src="./js/controller.js" type="module" defer></script>
   </head>
   <body>
     <h1 class="title">ToDo List</h1>
     <div class="content">
       <div class="todo-app">
-        <div class="input-area">
+        <form class="input-area">
           <input type="text" class="new-task" placeholder="Новая задача" />
           <button class="add-btn">Добавить</button>
-        </div>
+        </form>
+        <ul class="task-list hidden"></ul>
       </div>
       <footer class="todo-footer hidden">
         <button class="footer-btn remove-done-btn">Удалить завершенные</button>

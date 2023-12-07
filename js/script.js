@@ -4,32 +4,25 @@ const container = document.querySelector(".todo-app");
 const clearBtn = document.querySelector(".remove-all-btn");
 const todoFooter = document.querySelector(".todo-footer");
 const removeCompletedBtn = document.querySelector(".remove-done-btn");
+const inputForm = document.querySelector(".input-area");
+const removeAllBtn = document.querySelector(".remove-all-btn");
+const LS_TODO_KEY = "tasks";
+
 // переменная для редактирования
 let currentlyEditing = null;
 
 // let что бы он мутировал
-let toDoArr = [];
+let toDoArr = JSON.parse(localStorage.getItem(LS_TODO_KEY)) ?? [];
 
 // ФУНКЦИЯ СОХРАНЕНИЯ МАССИВА ЗАДАЧ В ЛОКАЛЬНОЕ ХРАНИЛИЩЕ БРАУЗЕРА ==============================
 function saveTasks() {
-  localStorage.setItem("tasks", JSON.stringify(toDoArr));
+  localStorage.setItem(LS_TODO_KEY, JSON.stringify(toDoArr));
 }
-
-// ФУНКЦИЯ ЗАГРУЗКИ МАССИВА ЗАДАЧ ИЗ ЛОКАЛЬНОГО ХРАНИЛИЩА БРАУЗЕРА ==============================
-function loadTasks() {
-  const savedTasks = localStorage.getItem("tasks");
-  if (savedTasks) {
-    toDoArr = JSON.parse(savedTasks);
-    renderTasks();
-  }
-}
-
-loadTasks();
 
 // ФУНКЦИЯ ДОБАВЛЕНИЯ ЗАДАЧИ В МАССИВ ==================================
 function addTask() {
   const taskText = newTaskInput.value.trim();
-  if (taskText != "") {
+  if (taskText.trim().length) {
     toDoArr.push({
       text: taskText,
       done: false,
@@ -37,31 +30,18 @@ function addTask() {
     });
 
     newTaskInput.value = "";
+    newTaskInput.focus();
     renderTasks();
     saveTasks();
-    
   }
 }
-
-// eventListener#1 | ДОБАВЛЕНИЕ ЗАДАЧИ В МАССИВ
-addBtn.addEventListener("click", addTask);
-
-// ФУНКЦИЯ ДОБАВЛЕНИЯ ЗАДАЧИ В МАССИВ НА ENTER ==================================
-newTaskInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    addTask();
-  }
-});
 
 // ФУНКЦИЯ УДАЛЕНИЯ ЗАДАЧИ ИЗ МАССИВА ==============================
 function removeTask(id) {
   toDoArr = toDoArr.filter((task) => task.id !== id);
   renderTasks();
   saveTasks();
-  deleteButton.removeEventListener("click", () => removeTask(task.id));
 }
-
-console.log(toDoArr);
 
 // ФУНКЦИЯ УДАЛЕНИЯ ВСЕХ ЗАДАЧ ==============================
 function removeAllTasks() {
@@ -69,10 +49,6 @@ function removeAllTasks() {
   renderTasks();
   saveTasks();
 }
-
-// eventListener#2 | УДАЛЕНИЕ ВСЕХ ЗАДАЧ ЧЕРЕЗ КНОПКУ "УДАЛИТЬ ВСЕ"
-const removeAllBtn = document.querySelector(".remove-all-btn");
-removeAllBtn.addEventListener("click", removeAllTasks);
 
 // ФУНКЦИЯ СМЕНЫ ЧЕКБОКСА ==============================
 function toggleTaskDone(id) {
@@ -90,9 +66,6 @@ function removeCompletedTasks() {
   saveTasks();
 }
 
-// eventListener#3 | УДАЛЕНИЕ ВЫПОЛНЕННЫХ ЗАДАЧ ЧЕРЕЗ КНОПКУ "УДАЛИТЬ ЗАВЕРШЕННЫЕ"
-removeCompletedBtn.addEventListener("click", removeCompletedTasks);
-
 // ФУНКЦИЯ СОЗДАНИЯ ЭЛЕМЕНТА ЗАДАЧИ ==============================
 function createTaskElement(task) {
   const taskItem = document.createElement("li");
@@ -107,6 +80,47 @@ function createTaskElement(task) {
     <button class="edit-task-btn">✏️</button>
     <button class="delete-task-btn">❌</button>
   `;
+
+  // ПОМЕНЯТЬ ЛОГИКУ С БУЛЕВЫМ ЗНАЧЕНИЕМ ЧЕКБОКСА
+
+  // eventListener#7 | УДАЛЕНИЕ ЗАДАЧИ ЧЕРЕЗ ИКОНКУ УДАЛЕНИЯ
+  // let deleteButton = taskItem.querySelector(".delete-task-btn");
+  // deleteButton.addEventListener("click", () => removeTask(task.id));
+
+  let deleteButton = taskItem.querySelector(".delete-task-btn");
+  const onDeleteButtonClick = () => {
+    removeTask(task.id);
+    setInterval(() => {
+      console.log("interval");
+    }, 2000);
+    deleteButton.removeEventListener("click", onDeleteButtonClick);
+  };
+  deleteButton.addEventListener("click", onDeleteButtonClick);
+
+  // eventListener#8 | СМЕНА БУЛЕВОГО ЗНАЧЕНИЯ ЧЕРЕЗ АКТИВАЦИЮ ЧЕКБОКСА
+  // let checkbox = taskItem.querySelector(".task-checkbox");
+  // checkbox.addEventListener("click", () => toggleTaskDone(task.id));
+
+  let checkbox = taskItem.querySelector(".task-checkbox");
+  const onCheckboxClick = () => {
+    toggleTaskDone(task.id);
+    checkbox.removeEventListener("click", onCheckboxClick);
+  };
+  checkbox.addEventListener("click", onCheckboxClick);
+
+  // eventListener#9 | РЕДАКТИРОВАНИЕ ЗАДАЧИ ============
+  // let editButton = taskItem.querySelector(".edit-task-btn");
+  // editButton.addEventListener("click", () => startEdit(taskItem, task));
+
+  let editButton = taskItem.querySelector(".edit-task-btn");
+
+  const onEditButtonClick = () => {
+    startEdit(taskItem, task);
+    editButton.removeEventListener("click", onEditButtonClick);
+  };
+
+  editButton.addEventListener("click", onEditButtonClick);
+
   return taskItem;
 }
 
@@ -190,41 +204,39 @@ function saveTaskEdit(taskId, inputValue) {
 // ФУНКЦИЯ ОТРИСОВКИ СПИСКА ЗАДАЧ ==============================
 function renderTasks() {
   let taskList = container.querySelector(".task-list");
-
-  if (!taskList) {
-    taskList = document.createElement("ul");
-    taskList.classList.add("task-list");
-    container.append(taskList);
-  }
-
+  taskList.classList.remove("hidden");
   taskList.innerHTML = "";
 
   // ПЕРЕБОР МАССИВА ЗАДАЧ
   toDoArr.forEach((task) => {
     const taskItem = createTaskElement(task);
-
     taskList.append(taskItem);
-
-    // eventListener#7 | УДАЛЕНИЕ ЗАДАЧИ ЧЕРЕЗ ИКОНКУ УДАЛЕНИЯ
-    let deleteButton = taskItem.querySelector(".delete-task-btn");
-    deleteButton.addEventListener("click", () => removeTask(task.id));
-
-    // eventListener#8 | СМЕНА БУЛЕВОГО ЗНАЧЕНИЯ ЧЕРЕЗ АКТИВАЦИЮ ЧЕКБОКСА
-    let checkbox = taskItem.querySelector(".task-checkbox");
-    checkbox.addEventListener("click", () => toggleTaskDone(task.id));
-
-    // eventListener#9 | РЕДАКТИРОВАНИЕ ЗАДАЧИ ============
-    let editButton = taskItem.querySelector(".edit-task-btn");
-    editButton.addEventListener("click", () => startEdit(taskItem, task));
   });
 
-  // ОТРИСОВКА ФУТЕРА ===========================
+  if (toDoArr.length === 0) {
+    taskList.classList.add("hidden");
+  }
+
+  renderFooter();
+  saveTasks();
+}
+
+// ОТРИСОВКА ФУТЕРА ===========================
+function renderFooter() {
   if (toDoArr.length > 0) {
     todoFooter.classList.remove("hidden");
   } else {
-    container.querySelector(".task-list").remove();
     todoFooter.classList.add("hidden");
   }
-
-  saveTasks();
 }
+
+// eventListener#1 | ДОБАВЛЕНИЕ ЗАДАЧИ В МАССИВ
+inputForm.addEventListener("submit", addTask);
+
+// eventListener#2 | УДАЛЕНИЕ ВСЕХ ЗАДАЧ ЧЕРЕЗ КНОПКУ "УДАЛИТЬ ВСЕ"
+removeAllBtn.addEventListener("click", removeAllTasks);
+
+// eventListener#3 | УДАЛЕНИЕ ВЫПОЛНЕННЫХ ЗАДАЧ ЧЕРЕЗ КНОПКУ "УДАЛИТЬ ЗАВЕРШЕННЫЕ"
+removeCompletedBtn.addEventListener("click", removeCompletedTasks);
+
+renderTasks();
