@@ -5,7 +5,7 @@ import { taskView } from "./view.js";
 export class taskController {
   constructor() {
     this.model = new taskModel();
-    this.view = new taskView(this);
+    this.view = new taskView();
 
     this.view.inputForm.addEventListener("submit", this.addTask.bind(this));
   }
